@@ -32,6 +32,7 @@ pygame.display.set_caption('Squash')
 screen = pygame.display.set_mode((screen_x, screen_y))
 clock = pygame.time.Clock()
 
+# some functions:
 def gameOver():
     screen.fill(black)
     myFont = pygame.font.SysFont('sans serif', 72)
@@ -57,13 +58,16 @@ def showScore(mode = 0):
         scoreRect.midtop = (320, 300)
     screen.blit(scoreSurf, scoreRect)
 
+# main loop:
 while not done:
+    # event handling:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 done = True
+
     # paddle movement:
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_LEFT]:
@@ -87,9 +91,11 @@ while not done:
     # game over detection:
     if ball['y'] > paddle['y'] and ball['y_speed'] > 0:
         gameOver()
+
     # ball movement:
     ball['x'] += ball['x_speed']
     ball['y'] += ball['y_speed']
+
     # drawing everything:
     screen.fill(black)
     pygame.draw.rect(screen, white, pygame.Rect(paddle['x'], paddle['y'], paddle['width'], paddle['height']))
