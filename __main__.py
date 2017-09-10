@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import pygame, time
+import pygame, time, sys
 
 # global variables:
 screen_x = 640
@@ -39,11 +39,23 @@ def gameOver():
     GOrect = GOsurf.get_rect()
     GOrect.midtop = (320, 220)   
     screen.blit(GOsurf, GOrect)
-    #showScore(0)
+    showScore(1)
     pygame.display.flip()
     time.sleep(2)
     pygame.quit()   #pygame exit
     sys.exit()  #console exit
+
+def showScore(mode = 0):
+    myFont = pygame.font.SysFont('sans serif', 30)
+    if mode == 0:
+        scoreSurf = myFont.render(str(score), True, white)
+        scoreRect = scoreSurf.get_rect()
+        scoreRect.midtop = (20, 20)
+    else:
+        scoreSurf = myFont.render('Your score: '+str(score), True, white)
+        scoreRect = scoreSurf.get_rect()
+        scoreRect.midtop = (320, 300)
+    screen.blit(scoreSurf, scoreRect)
 
 while not done:
     for event in pygame.event.get():
@@ -82,5 +94,6 @@ while not done:
     screen.fill(black)
     pygame.draw.rect(screen, white, pygame.Rect(paddle['x'], paddle['y'], paddle['width'], paddle['height']))
     pygame.draw.rect(screen, white, pygame.Rect(ball['x'], ball['y'], ball['size'], ball['size']))
+    showScore()
     pygame.display.flip()
     clock.tick(framerate)
