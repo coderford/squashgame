@@ -33,7 +33,7 @@ pygame.display.set_caption('Squash')
 screen = pygame.display.set_mode((screen_x, screen_y))
 clock = pygame.time.Clock()
 
-# some functions:
+# functions:
 def gameOver():
     screen.fill(black)
     myFont = pygame.font.SysFont('sans serif', 72)
@@ -95,7 +95,9 @@ while not done:
         if ball['y_speed'] > 0:
             if ball['y'] + ball['size'] >= paddle['y']:
                 ball['y_speed'] = -ball['y_speed']
+                ball['x_speed'] = (ball['x']+5 - (paddle['x']+paddle['width']/2))/(paddle['width']/2)*10
                 score += 1
+
 
     # game over detection:
     if ball['y'] > paddle['y'] and ball['y_speed'] > 0:
