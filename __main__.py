@@ -59,9 +59,18 @@ def showScore(mode = 0):
         scoreRect.midtop = (320, 300)
     screen.blit(scoreSurf, scoreRect)
 
-# main loop:
-while not done:
-    # event handling:
+def pauseScreen():
+    translucentBkg = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
+    translucentBkg.fill((50, 50, 50, 100))
+    myFont = pygame.font.SysFont('sans serif', 50)
+    pauseSurf = myFont.render('Paused', True, white)
+    pauseRect = pauseSurf.get_rect()
+    pauseRect.midtop = (screen_x/2, screen_y/2)
+    screen.blit(translucentBkg, (0, 0))
+    screen.blit(pauseSurf, pauseRect)
+
+def handle_events():
+    global paused, done
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -70,8 +79,8 @@ while not done:
                 done = True
             if event.key == pygame.K_RETURN:
                 paused = not paused
-    if paused:
-        continue
+
+def paddle_updates():
     # paddle movement:
     pressed = pygame.key.get_pressed()
     if pressed[pygame.K_LEFT] and paddle['x']>=0:
@@ -84,6 +93,8 @@ while not done:
     if paddle['x'] <= 0:
         paddle['x'] = 0
 
+def ball_updates():
+    global score
     # ball collisions:
         # with walls:
     if ball['x']+ball['size'] > screen_x or ball['x'] < 0:
@@ -97,20 +108,27 @@ while not done:
                 ball['y_speed'] = -ball['y_speed']
                 ball['x_speed'] = (ball['x']+5 - (paddle['x']+paddle['width']/2))/(paddle['width']/2)*10
                 score += 1
-
-
-    # game over detection:
-    if ball['y'] > paddle['y'] and ball['y_speed'] > 0:
-        gameOver()
-
     # ball movement:
     ball['x'] += ball['x_speed']
     ball['y'] += ball['y_speed']
 
-    # drawing everything:
+def draw():
     screen.fill(black)
     pygame.draw.rect(screen, white, pygame.Rect(paddle['x'], paddle['y'], paddle['width'], paddle['height']))
     pygame.draw.rect(screen, white, pygame.Rect(ball['x'], ball['y'], ball['size'], ball['size']))
     showScore()
+    if paused:
+        pauseScreen()
     pygame.display.flip()
     clock.tick(framerate)
+
+# main loop:
+while not done:
+    handle_events()
+    if not paused:
+        paddle_updates()
+        ball_updates()
+        # game over detection:
+        if ball['y'] > paddle['y'] and ball['y_speed'] > 0:
+            gameOver()
+    draw()
