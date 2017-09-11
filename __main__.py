@@ -21,6 +21,7 @@ ball = {
 framerate = 60
 score = 0
 done = False
+paused = False
     # some colors:
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -67,21 +68,29 @@ while not done:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 done = True
-
+            if event.key == pygame.K_RETURN:
+                paused = not paused
+    if paused:
+        continue
     # paddle movement:
     pressed = pygame.key.get_pressed()
-    if pressed[pygame.K_LEFT]:
+    if pressed[pygame.K_LEFT] and paddle['x']>=0:
         paddle['x'] -= paddle['speed']
-    if pressed[pygame.K_RIGHT]:
+    if pressed[pygame.K_RIGHT] and paddle['x']<=screen_x-paddle['width']:
         paddle['x'] += paddle['speed']
+    # paddle collisions:
+    if paddle['x'] + paddle['width'] >= screen_x:
+        paddle['x'] = screen_x - paddle['width']
+    if paddle['x'] <= 0:
+        paddle['x'] = 0
 
     # ball collisions:
-        # walls:
+        # with walls:
     if ball['x']+ball['size'] > screen_x or ball['x'] < 0:
         ball['x_speed'] = -ball['x_speed']
     if ball['y'] < 0:
         ball['y_speed'] = -ball['y_speed']
-        # paddle:
+        # with paddle:
     if paddle['x']-ball['size']<=ball['x']<=paddle['x']+paddle['width']:
         if ball['y_speed'] > 0:
             if ball['y'] + ball['size'] >= paddle['y']:
