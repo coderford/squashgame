@@ -28,6 +28,7 @@ paused = False
 white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
+gold = (239, 229, 51)
     #highscore vars
 highscores = []  
 highscore_file = 'highscores.csv'   
@@ -46,15 +47,19 @@ def write_highscores(filename):
         writer = csv.writer(csvfile)
         writer.writerows(highscores)
 
+def blit_text(screen, text, midtop, aa=True, font=None, font_name = None, size = None, color=(255,0,0)):
+    if font is None:                                    # font option is provided to save memory if font is
+        font = pygame.font.SysFont(font_name, size)     # already loaded and needs to reused many times
+    font_surface = font.render(text, aa, color)
+    font_rect = font_surface.get_rect()
+    font_rect.midtop = midtop
+    screen.blit(font_surface, font_rect)
+
 def gameOver():
-    screen.fill(black)
-    myFont = pygame.font.SysFont('sans serif', 72)
-    GOsurf = myFont.render('GAME OVER', True, white) #2nd arg for AA
-    GOrect = GOsurf.get_rect()
-    GOrect.midtop = (320, 220)   
+    global screen, score
     for i, highscore in enumerate(highscores): # checking if there is a new highscore and adding to highscores
         if score>int(highscore[1]):
-            txtbx = eztext.Input(x = 20, y = 220,maxlength=45, color=(255,255,255), prompt='NEW HIGHSCORE! Your name: ')
+            txtbx = eztext.Input(x = 150, y = 240,maxlength=45, color=(255,255,255), prompt='Your name: ')
             input_done = False
             name = ''
             while not input_done:
@@ -66,6 +71,7 @@ def gameOver():
                         print(name)
                 txtbx.update(events)
                 screen.fill(black)
+                blit_text(screen, 'NEW HIGHSCORE!', (320, 180), font_name='sans serif', size=50, color=gold, )
                 txtbx.draw(screen)
                 pygame.display.flip()
             highscores.insert(i, tuple([name, str(score)])) 
@@ -74,7 +80,7 @@ def gameOver():
             break
     # now blitting and drawing everything after getting input
     screen.fill(black)
-    screen.blit(GOsurf, GOrect)
+    blit_text(screen, 'GAME OVER', (320, 200), font_name='sans serif', size=72, color=white)
     showScore(1)
     pygame.display.flip()
     write_highscores(highscore_file)
@@ -84,44 +90,26 @@ def gameOver():
 
 def showScore(mode = 0): # mode: 0 means normal corner display, 1 means gameover display with highscores
     global score, screen
-    myFont = pygame.font.SysFont('sans serif', 30)
-    myFont_small = pygame.font.SysFont('mono', 18)
+    sans_font = pygame.font.SysFont('sans serif', 30)
+    mono_font = pygame.font.SysFont('mono', 18)
     if mode == 0:
-        myscoreSurf = myFont.render(str(score), True, white)
-        myscoreRect = myscoreSurf.get_rect()
-        myscoreRect.midtop = (20, 20)
+        blit_text(screen, str(score), (20,20), font=sans_font, color=white)
     else:
-        myscoreSurf = myFont.render('Your score: '+str(score), True, white)
-        myscoreRect = myscoreSurf.get_rect()
-        myscoreRect.midtop = (320, 270)
-        high_title = myFont.render('High Scores', True, white)
-        high_titleRect = high_title.get_rect()
-        high_titleRect.midtop = (320, 315)
-        screen.blit(high_title, high_titleRect)
-        highscore_screens = []
-        highscore_rects = []
+        blit_text(screen, 'Your score: '+str(score), (320, 270), font=sans_font, color=white)
+        blit_text(screen, 'High Scores', (320, 315), font_name='sans serif', size=25, color=white)
+        #blit_text(screen, '---------------------', (320, 327), font_name='sans serif',  size=25, color=white)
         score_start_pos = [320, 350]
         for i, highscore in enumerate(highscores):
-            highscore_screens.append(myFont_small.render(str(i+1)+'. '+"{:14}".format(highscore[0]) + '{:3}'.format(highscore[1]), True, white))
-        for high_screen in highscore_screens:
-            highscore_rects.append(high_screen.get_rect())
-        for rect in highscore_rects:
-            rect.midtop = tuple(score_start_pos)
+            blit_text(screen, str(i+1)+'. '+"{:14}".format(highscore[0])+'{:3}'.format(highscore[1]),
+                      tuple(score_start_pos), font = mono_font, color = white  )
             score_start_pos[1]+=18
-        for high_screen, rect in zip(highscore_screens, highscore_rects):
-            screen.blit(high_screen, rect)
-    screen.blit(myscoreSurf, myscoreRect)
 
 def pauseScreen():
     global screen
     translucentBkg = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
     translucentBkg.fill((50, 50, 50, 100))
-    myFont = pygame.font.SysFont('sans serif', 50)
-    pauseSurf = myFont.render('Paused', True, white)
-    pauseRect = pauseSurf.get_rect()
-    pauseRect.midtop = (screen_x/2, screen_y/2)
     screen.blit(translucentBkg, (0, 0))
-    screen.blit(pauseSurf, pauseRect)
+    blit_text(screen, 'Paused', (320, 240), font_name='sans serif', size=50, color=white)
 
 def handle_events():
     global paused, done
