@@ -29,6 +29,7 @@ white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
 gold = (239, 229, 51)
+blue = (78,162,196)
     #highscore vars
 highscores = []  
 highscore_file = 'highscores.csv'   
@@ -55,7 +56,39 @@ def blit_text(screen, text, midtop, aa=True, font=None, font_name = None, size =
     font_rect.midtop = midtop
     screen.blit(font_surface, font_rect)
 
-def gameOver():
+def menu_screen():  # to be called before starting actual game loop
+    global screen
+    menu_done = False
+    menuitems = ['Play', 'Quit'] 
+    focus_index = 0
+    while not menu_done:  # every screen/scene/level has its own loop
+        screen.fill(black)
+        blit_text(screen, 'Squash', (320,180), font_name='sans serif', size=70, color=gold)
+        menu_ypos = 260
+        for i, menuitem in enumerate(menuitems):
+            textcolor = white
+            if focus_index == i:
+                textcolor = blue
+            blit_text(screen,menuitem, (320, menu_ypos), font_name='sans serif', size=35, color=textcolor)
+            menu_ypos += 30
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type==pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    focus_index -= 1
+                if event.key == pygame.K_DOWN:
+                    focus_index += 1
+                if event.key == pygame.K_RETURN:
+                    menu_done = True
+        if focus_index==len(menuitems): focus_index = 0
+        elif focus_index<0: focus_index = len(menuitems)-1
+        clock.tick(60)
+    if focus_index == 1:
+        pygame.quit()
+        sys.exit()
+
+
+def gameOver(): # game over screen
     global screen, score
     for i, highscore in enumerate(highscores): # checking if there is a new highscore and adding to highscores
         if score>int(highscore[1]):
@@ -76,7 +109,7 @@ def gameOver():
                 pygame.display.flip()
             highscores.insert(i, tuple([name, str(score)])) 
             highscores.pop()
-            print(highscores)
+            clock.tick(60)
             break
     # now blitting and drawing everything after getting input
     screen.fill(black)
@@ -171,6 +204,7 @@ pygame.display.set_caption('Squash')
 screen = pygame.display.set_mode((screen_x, screen_y))
 clock = pygame.time.Clock()
 read_highscores(highscore_file)
+menu_screen()
 
 # main loop:
 while not done:
