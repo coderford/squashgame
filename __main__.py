@@ -3,13 +3,22 @@ import pygame, sys, csv, os, eztext
 from math import fabs
 from time import sleep
 
+# Ball class
 class Ball():
-    def __init__(self,screen):
-        self.size = 10
-        self.x = screen_x/2-self.size/2
-        self.y = screen_y/2
-        self.x_speed = 5
-        self.y_speed = -10
+    def __init__(self, screen, size=None, x=None, y=None, x_speed=None, y_speed=None):
+        if size is None:
+            self.size = 10
+            self.x = screen_x/2-self.size/2
+            self.y = screen_y/2
+            self.x_speed = 5
+            self.y_speed = -10
+        else:
+            self.size = size
+            self.x = x
+            self.y = y
+            self.x_speed = x_speed
+            self.y_speed = y_speed
+
     def draw(self, screen):
         pygame.draw.rect(screen, white, pygame.Rect(self.x, self.y, self.size, self.size))
         return
@@ -28,16 +37,12 @@ class Ball():
                 if self.y + self.size >= paddle.y:
                     self.y_speed = -self.y_speed
                     self.x_speed = (self.x+5 - (paddle.x+paddle.width/2))/(paddle.width/2)*10
-                    #score += 1
-        return
-    def move(self):
+                    return True
+        return False
+    def handle_movement(self):
         self.x += self.x_speed
         self.y += self.y_speed 
-    def all_updates(self, paddle, screen):
-        self.wall_collisions(screen)
-        self.paddle_collisions(paddle)
-        self.move()
-
+# Paddle class
 class Paddle():
     def __init__(self, screen):
         self.width = 70
@@ -61,10 +66,6 @@ class Paddle():
         if pressed[pygame.K_RIGHT] and self.x<=screen.get_width()-self.width:
             self.x +=self.speed
         return
-    def all_updates(self, screen):
-        self.wall_collisions(screen)
-        self.handle_movement(screen)
-
 
 # global variables:
 screen_x = 640 #screen width
@@ -110,8 +111,23 @@ def menu_screen():  # to be called before starting actual game loop
     menu_done = False
     menuitems = ['Play', 'Quit'] 
     focus_index = 0
+    # bkg balls initialization
+    balls = []
+    count = 20
+    for i in range(count):
+        balls.append(Ball(screen, 10, screen.get_width()/2-5, i*screen.get_height()/count, (-1)**i*10*(fabs(count/2-i)+1), 0))
+    # -------
     while not menu_done:  # every screen/scene/level has its own loop
         screen.fill(black)
+        # bkg balls drawing
+        for ball in balls:
+            ball.wall_collisions(screen)
+            ball.handle_movement()
+            ball.draw(screen)
+        translucentBkg = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
+        translucentBkg.fill((50, 50, 50, 200))
+        screen.blit(translucentBkg, (0, 0))
+        #------------
         blit_text(screen, 'Squash', (320,180), font_name='sans serif', size=70, color=gold)
         menu_ypos = 260
         for i, menuitem in enumerate(menuitems):
@@ -186,12 +202,13 @@ def showScore(mode = 0): # mode: 0 means normal corner display, 1 means gameover
                       tuple(score_start_pos), font = mono_font, color = white  )
             score_start_pos[1]+=18
 
-def pauseScreen():
+def pause_screen():
     global screen
     translucentBkg = pygame.Surface((screen_x, screen_y), pygame.SRCALPHA)
     translucentBkg.fill((50, 50, 50, 100))
     screen.blit(translucentBkg, (0, 0))
     blit_text(screen, 'Paused', (320, 240), font_name='sans serif', size=50, color=white)
+    pygame.display.flip()
 
 def handle_events():
     global paused, done
@@ -209,10 +226,7 @@ def draw():
     paddle.draw(screen)
     ball.draw(screen)
     showScore()
-    if paused:
-        pauseScreen()
-    pygame.display.flip()
-    clock.tick(framerate)
+    
 
 # initializations:
 pygame.init()
@@ -230,9 +244,17 @@ menu_screen()
 while not done:
     handle_events()
     if not paused:
-        paddle.all_updates(screen)
-        ball.all_updates(paddle, screen)
+        paddle.wall_collisions(screen)
+        paddle.handle_movement(screen)
+        ball.wall_collisions(screen)
+        if ball.paddle_collisions(paddle):
+            score += 1
+        ball.handle_movement()
         # game over detection:
         if ball.y > paddle.y and ball.y_speed> 0:
             gameOver()
     draw()
+    if paused:
+        pause_screen()
+    clock.tick(framerate)
+    pygame.display.flip()
