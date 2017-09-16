@@ -3,23 +3,72 @@ import pygame, sys, csv, os, eztext
 from math import fabs
 from time import sleep
 
+class Ball():
+    def __init__(self,screen):
+        self.size = 10
+        self.x = screen_x/2-self.size/2
+        self.y = screen_y/2
+        self.x_speed = 5
+        self.y_speed = -10
+    def draw(self, screen):
+        pygame.draw.rect(screen, white, pygame.Rect(self.x, self.y, self.size, self.size))
+        return
+    def wall_collisions(self, screen):
+        screen_x = screen.get_width()
+        screen_y = screen.get_height()
+        if self.x+self.size > screen_x or self.x < 0:
+            self.x_speed = -self.x_speed
+            self.x += 2*self.x_speed/fabs(self.x_speed)
+        if self.y < 0:
+            self.y_speed = -self.y_speed
+        return
+    def paddle_collisions(self, paddle):
+        if paddle.x-self.size<=self.x<=paddle.x+paddle.width:
+            if self.y_speed > 0:
+                if self.y + self.size >= paddle.y:
+                    self.y_speed = -self.y_speed
+                    self.x_speed = (self.x+5 - (paddle.x+paddle.width/2))/(paddle.width/2)*10
+                    #score += 1
+        return
+    def move(self):
+        self.x += self.x_speed
+        self.y += self.y_speed 
+    def all_updates(self, paddle, screen):
+        self.wall_collisions(screen)
+        self.paddle_collisions(paddle)
+        self.move()
+
+class Paddle():
+    def __init__(self, screen):
+        self.width = 70
+        self.height = 10
+        self.x = screen.get_width()/2 - self.width/2
+        self.y = screen.get_height() - self.height
+        self.speed = 10
+    def draw(self, screen):
+        pygame.draw.rect(screen, white, pygame.Rect(self.x, self.y, self.width, self.height))
+        return
+    def wall_collisions(self, screen):
+        if self.x + self.width >= screen.get_width():
+            self.x = screen.get_width() - self.width
+        if self.x <= 0:
+            self.x = 0
+        return
+    def handle_movement(self, screen):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_LEFT] and self.x>=0:
+            self.x -= self.speed
+        if pressed[pygame.K_RIGHT] and self.x<=screen.get_width()-self.width:
+            self.x +=self.speed
+        return
+    def all_updates(self, screen):
+        self.wall_collisions(screen)
+        self.handle_movement(screen)
+
+
 # global variables:
 screen_x = 640 #screen width
 screen_y = 480 #screen height
-paddle = {
-    'width': 70,
-    'height': 10,
-    'x': screen_x/2 - 35,
-    'y': screen_y - 10,
-    'speed': 10
-}
-ball = {
-    'size': 10,
-    'x': screen_x/2 - 5,
-    'y': screen_y/2 - 5,
-    'x_speed': 5,
-    'y_speed': -10
-}
 framerate = 60
 score = 0
 done = False
@@ -155,43 +204,10 @@ def handle_events():
             if event.key == pygame.K_SPACE:
                 paused = not paused
 
-def paddle_updates():
-    # paddle movement:
-    pressed = pygame.key.get_pressed()
-    if pressed[pygame.K_LEFT] and paddle['x']>=0:
-        paddle['x'] -= paddle['speed']
-    if pressed[pygame.K_RIGHT] and paddle['x']<=screen_x-paddle['width']:
-        paddle['x'] += paddle['speed']
-    # paddle collisions:
-    if paddle['x'] + paddle['width'] >= screen_x:
-        paddle['x'] = screen_x - paddle['width']
-    if paddle['x'] <= 0:
-        paddle['x'] = 0
-
-def ball_updates():
-    global score
-    # ball collisions:
-        # with walls:
-    if ball['x']+ball['size'] > screen_x or ball['x'] < 0:
-        ball['x_speed'] = -ball['x_speed']
-        ball['x'] += 2*ball['x_speed']/fabs(ball['x_speed'])
-    if ball['y'] < 0:
-        ball['y_speed'] = -ball['y_speed']
-        # with paddle:
-    if paddle['x']-ball['size']<=ball['x']<=paddle['x']+paddle['width']:
-        if ball['y_speed'] > 0:
-            if ball['y'] + ball['size'] >= paddle['y']:
-                ball['y_speed'] = -ball['y_speed']
-                ball['x_speed'] = (ball['x']+5 - (paddle['x']+paddle['width']/2))/(paddle['width']/2)*10
-                score += 1
-    # ball movement:
-    ball['x'] += ball['x_speed']
-    ball['y'] += ball['y_speed']
-
 def draw():
     screen.fill(black)
-    pygame.draw.rect(screen, white, pygame.Rect(paddle['x'], paddle['y'], paddle['width'], paddle['height']))
-    pygame.draw.rect(screen, white, pygame.Rect(ball['x'], ball['y'], ball['size'], ball['size']))
+    paddle.draw(screen)
+    ball.draw(screen)
     showScore()
     if paused:
         pauseScreen()
@@ -204,15 +220,19 @@ pygame.display.set_caption('Squash')
 screen = pygame.display.set_mode((screen_x, screen_y))
 clock = pygame.time.Clock()
 read_highscores(highscore_file)
+
+paddle = Paddle(screen)
+ball = Ball(screen)
+
 menu_screen()
 
 # main loop:
 while not done:
     handle_events()
     if not paused:
-        paddle_updates()
-        ball_updates()
+        paddle.all_updates(screen)
+        ball.all_updates(paddle, screen)
         # game over detection:
-        if ball['y'] > paddle['y'] and ball['y_speed'] > 0:
+        if ball.y > paddle.y and ball.y_speed> 0:
             gameOver()
     draw()
