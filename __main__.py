@@ -111,6 +111,7 @@ def blit_text(screen, text, midtop, aa=True, font=None, font_name = None, size =
     screen.blit(font_surface, font_rect)
 
 def menu_screen():  # to be called before starting actual game loop
+    menu_beep = pygame.mixer.Sound('sfx/sounds/menu_beep.wav')
     global screen
     menu_done = False
     menuitems = ['Play', 'Quit'] 
@@ -144,8 +145,10 @@ def menu_screen():  # to be called before starting actual game loop
         for event in pygame.event.get():
             if event.type==pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    menu_beep.play()
                     focus_index -= 1
                 if event.key == pygame.K_DOWN:
+                    menu_beep.play()
                     focus_index += 1
                 if event.key == pygame.K_RETURN:
                     menu_done = True
@@ -247,11 +250,14 @@ ball = Ball(screen)
 #initializing sounds:
 sounds['hit_paddle'] = pygame.mixer.Sound('sfx/sounds/hit_paddle.wav')
 sounds['hit_wall'] = pygame.mixer.Sound('sfx/sounds/hit_wall.wav')
+sounds['game_over'] = pygame.mixer.Sound('sfx/sounds/game_over.wav')
+sounds['game_start'] = pygame.mixer.Sound('sfx/sounds/game_start.wav')
+
 for sound in sounds.values():
-    sound.set_volume(20)
+    sound.set_volume(30)
 
 menu_screen()
-
+sounds['game_start'].play()
 # main loop:
 while not done:
     handle_events()
@@ -266,6 +272,7 @@ while not done:
         ball.handle_movement()
         # game over detection:
         if ball.y > paddle.y and ball.y_speed> 0:
+            sounds['game_over'].play()
             gameOver()
     draw()
     if paused:
