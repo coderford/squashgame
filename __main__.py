@@ -23,14 +23,17 @@ class Ball():
         pygame.draw.rect(screen, white, pygame.Rect(self.x, self.y, self.size, self.size))
         return
     def wall_collisions(self, screen):
+        return_val = False
         screen_x = screen.get_width()
         screen_y = screen.get_height()
         if self.x+self.size > screen_x or self.x < 0:
             self.x_speed = -self.x_speed
             self.x += 2*self.x_speed/fabs(self.x_speed)
+            return_val = True
         if self.y < 0:
             self.y_speed = -self.y_speed
-        return
+            return_val = True
+        return return_val
     def paddle_collisions(self, paddle):
         if paddle.x-self.size<=self.x<=paddle.x+paddle.width:
             if self.y_speed > 0:
@@ -80,9 +83,10 @@ black = (0, 0, 0)
 red = (255, 0, 0)
 gold = (239, 229, 51)
 blue = (78,162,196)
-    #highscore vars
+    # highscore vars
 highscores = []  
-highscore_file = 'highscores.csv'   
+highscore_file = 'highscores.csv'  
+sounds = {} 
 
 # functions:
 def read_highscores(filename):
@@ -229,14 +233,22 @@ def draw():
     
 
 # initializations:
+# these two mixer initializations seem to be necessary to avoid delaying of sounds
+pygame.mixer.pre_init(44100, -16, 2, 512)  # sets a larger buffer size?
+pygame.mixer.init()
 pygame.init()
 pygame.display.set_caption('Squash')
 screen = pygame.display.set_mode((screen_x, screen_y))
 clock = pygame.time.Clock()
 read_highscores(highscore_file)
-
+# initializing ball and paddle:
 paddle = Paddle(screen)
 ball = Ball(screen)
+#initializing sounds:
+sounds['hit_paddle'] = pygame.mixer.Sound('sfx/sounds/hit_paddle.wav')
+sounds['hit_wall'] = pygame.mixer.Sound('sfx/sounds/hit_wall.wav')
+for sound in sounds.values():
+    sound.set_volume(20)
 
 menu_screen()
 
@@ -245,9 +257,11 @@ while not done:
     handle_events()
     if not paused:
         paddle.wall_collisions(screen)
-        paddle.handle_movement(screen)
-        ball.wall_collisions(screen)
+        paddle.handle_movement(screen)  
+        if ball.wall_collisions(screen):
+            sounds['hit_wall'].play()
         if ball.paddle_collisions(paddle):
+            sounds['hit_paddle'].play()
             score += 1
         ball.handle_movement()
         # game over detection:
